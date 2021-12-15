@@ -23,7 +23,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "../P02/elapsed_time.h"
+#include <math.h>
+#include "P02/elapsed_time.h"
 #include STUDENT_H_FILE
 
 
@@ -130,7 +131,7 @@ int main(void)
   for(int i = 0;i < n_problems;i++)
   {
     int n = all_subset_sum_problems[i].n; // the value of n
-    if(n > 31)
+    if(n > 20)
       continue; // skip large values of n
     integer_t *p = all_subset_sum_problems[i].p; // the weights
     //
@@ -143,7 +144,7 @@ int main(void)
       
       double start = cpu_time();
       #ifdef BTF_ITR 
-        fprintf(stderr,"Encontrou? %d \n",bruteforce_iterativo(n,p,desired_sum,&b));
+        bruteforce_iterativo(n,p,desired_sum,&b);
       #endif
 
       #ifdef BTF_RCR_NOTM

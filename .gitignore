@@ -50,3 +50,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+subset_sum_problem
+.gitignore
+resultados.txt
