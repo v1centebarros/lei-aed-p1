@@ -15,7 +15,8 @@
 
 // #define BTF_ITR
 // #define BTF_RCR_NOTM
-#define BTF_RCR_OTM
+// #define BTF_RCR_OTM
+#define HW_SN
 
 //
 // include files
@@ -104,6 +105,96 @@ int bruteforce_recursivo_otimizado(int n,integer_t p[n], int level, integer_t pa
 }
 
 
+void Swap(integer_t* a, integer_t* b)
+{
+  integer_t t = *a;
+  *a = *b;
+  *b = t;
+}
+
+int Partition(integer_t arr[], int low, int high)
+{
+    integer_t pivot = arr[high]; // pivot
+    int i = (low - 1); // Index of smaller element and indicates the right position of pivot found so far
+
+    for (int j = low; j <= high - 1; j++)
+    {
+        // If current element is smaller than the pivot
+        if (arr[j] < pivot)
+        {
+            i++; // increment index of smaller element
+            Swap(&arr[i], &arr[j]);
+        }
+    }
+    Swap(&arr[i + 1], &arr[high]);
+    return (i + 1);
+}
+
+void QuickSort(integer_t arr[], int low, int high)
+{
+    if (low < high)
+    {
+      /* pi is partitioning index, arr[p] is now
+      at right place */
+      int pi = Partition(arr, low, high);
+      // Separately sort elements before
+      // partition and after partition
+      QuickSort(arr, low, pi - 1);
+      QuickSort(arr, pi + 1, high);
+    }
+}
+
+
+int horowitz_sahni(int n,integer_t p[],integer_t desired_sum) {
+  int nA = n / 2;
+  int nB = n - nA;
+  int a[nA], b[nB];
+
+  for (int i = 0; i < nA; i++)
+    a[i] = p[i];
+
+  for (int i = 0; i < nB; i++)
+    b[i] = p[nA+i];
+
+  integer_t sumsA[1<<nA], sumsB[1<<nB];
+  
+  for (int mask = 0; mask < 1<<nA; mask++)
+  {
+      integer_t partial_sum = 0;
+      for (int bit = 0; bit < nA; bit++) {
+        if (mask & (1<<bit))
+          partial_sum += a[bit];
+      }
+      sumsA[mask] = partial_sum; 
+  }
+
+  QuickSort(sumsA,0, (1<<nA)-1);
+  for (int mask = 0; mask < 1<<nB; mask++)
+  {
+    integer_t partial_sum = 0;
+    for (int bit = 0; bit < nB; bit++) {
+      if (mask & (1<<bit))
+        partial_sum += b[bit];
+    }
+    sumsB[mask] = partial_sum;
+  }
+  QuickSort(sumsB,0, (1<<nB)-1);
+  
+  int i = 0, j = (1<<nB)-1;
+
+  while (i<(1<<nA) && j >= 0)
+  {
+    if (sumsA[i] + sumsB[j] == desired_sum){
+      return 1;
+    } else if ( sumsA[i] + sumsB[j] < desired_sum) {
+      i++;
+    } else {
+      j--;
+    }
+  }
+  return 0;
+}
+
 //
 // main program
 //
@@ -122,7 +213,7 @@ int main(void)
   for(int i = 0;i < n_problems;i++)
   {
     int n = all_subset_sum_problems[i].n; // the value of n
-    if(n > 20)
+    if(n > 46)
       continue; // skip large values of n
     integer_t *p = all_subset_sum_problems[i].p; // the weights
     //
@@ -154,6 +245,11 @@ int main(void)
 
         bruteforce_recursivo_otimizado(n,p,n-1,0,desired_sum,0,&b, sums);
       #endif
+
+      #ifdef HW_SN 
+        printf("%d\n",horowitz_sahni(n,p,desired_sum));
+      #endif
+
       double end = cpu_time();
 
       for (int i = 0; i < n; i++){
