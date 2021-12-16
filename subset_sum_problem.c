@@ -23,7 +23,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
 #include "P02/elapsed_time.h"
 #include STUDENT_H_FILE
 
@@ -94,7 +93,6 @@ int bruteforce_recursivo_otimizado(int n,integer_t p[n], int level, integer_t pa
   }
 
   if (level < 0 || partial_sum > desired_sum || partial_sum + sums[level] < desired_sum) {
-    // printf("%llu \n", sums[level]);
     return 0;
   }
   
