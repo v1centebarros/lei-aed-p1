@@ -13,9 +13,9 @@
 # define STUDENT_H_FILE "000000.h"
 #endif
 
-#define BTF_ITR
+// #define BTF_ITR
 // #define BTF_RCR_NOTM
-// #define BTF_RCR_OTM
+#define BTF_RCR_OTM
 
 //
 // include files
@@ -52,16 +52,15 @@
 
 
 int bruteforce_iterativo (int n,integer_t p[n],integer_t desired_sum,integer_t *b) {
-  for (int comb = 0; comb < pow(2,n); comb++)
+  for (int mask = 0; mask < 1<<n; mask++)
   {
-      integer_t test_sum = 0;
-      for (int bit = 0; bit < n; bit++)
-      {
-        if (comb & (1<<bit))
-          test_sum += p[bit];
+      integer_t partial_sum = 0;
+      for (int bit = 0; bit < n; bit++) {
+        if (mask & (1<<bit))
+          partial_sum += p[bit];
       }
-      if (test_sum == desired_sum){
-        *b = comb;
+      if (partial_sum == desired_sum){
+        *b = mask;
         return 1;
       }
   }
@@ -87,31 +86,25 @@ int bruteforce_recursivo(int n,integer_t p[n], int level, integer_t partial_sum,
 }
 
 
-int bruteforce_recursivo_otimizado(int n,integer_t p[n], int level, integer_t partial_sum,integer_t desired_sum, integer_t mask, integer_t *b) 
+int bruteforce_recursivo_otimizado(int n,integer_t p[n], int level, integer_t partial_sum,integer_t desired_sum, integer_t mask, integer_t *b, integer_t *sums) 
 {
-  integer_t soma = 0;
-  for (int i = level; i < n; i++)
-  {
-    soma+=p[i];
-  }
-  
-  
-  if (level > n || partial_sum > desired_sum || partial_sum + soma < desired_sum) {
-    return 0;
-  }
   if (partial_sum == desired_sum) {
     *b = mask;
     return 1;
   }
-  
 
-  if(bruteforce_recursivo (n,p,level+1,partial_sum+p[level],desired_sum,(mask|(1<<level)),b)) {
-    return 1;
-  } else {
-    return bruteforce_recursivo (n,p,level+1,partial_sum,desired_sum,mask,b);
+  if (level < 0 || partial_sum > desired_sum || partial_sum + sums[level] < desired_sum) {
+    // printf("%llu \n", sums[level]);
+    return 0;
   }
   
+  if(bruteforce_recursivo_otimizado (n,p,level-1,partial_sum+p[level],desired_sum,(mask|(1<<(level))),b,sums)) {
+    return 1;
+  } else {
+    return bruteforce_recursivo_otimizado (n,p,level-1,partial_sum,desired_sum,mask,b, sums);
+  }
 }
+
 
 //
 // main program
@@ -152,7 +145,16 @@ int main(void)
       #endif
 
       #ifdef BTF_RCR_OTM
-        bruteforce_recursivo_otimizado(n,p,0,0,desired_sum,0,&b);
+        integer_t *sums = (integer_t *) malloc(n*sizeof(integer_t));
+
+        for (int i = 0; i < n; i++) {
+          sums[i] = 0;
+          for (int j = 0; j <= i; j++) {
+            sums[i]+=p[j];
+          }
+        }
+
+        bruteforce_recursivo_otimizado(n,p,n-1,0,desired_sum,0,&b, sums);
       #endif
       double end = cpu_time();
 
@@ -160,9 +162,7 @@ int main(void)
         printf("%s",b&1 ? "1":"0");
         b=b>>1;
       }
-      printf("\n");
-      printf("Tempo de execução: %lfs",end-start);
-      printf("\n");
+      printf(" %lfs\n",end-start);
     }
   }
   return 0;
