@@ -105,14 +105,14 @@ int bruteforce_recursivo_otimizado(int n,integer_t p[n], int level, integer_t pa
 }
 
 
-void Swap(integer_t* a, integer_t* b)
+void swap(integer_t* a, integer_t* b)
 {
   integer_t t = *a;
   *a = *b;
   *b = t;
 }
 
-int Partition(integer_t arr[], int low, int high)
+int partition(integer_t arr[], int low, int high)
 {
     integer_t pivot = arr[high]; // pivot
     int i = (low - 1); // Index of smaller element and indicates the right position of pivot found so far
@@ -123,24 +123,24 @@ int Partition(integer_t arr[], int low, int high)
         if (arr[j] < pivot)
         {
             i++; // increment index of smaller element
-            Swap(&arr[i], &arr[j]);
+            swap(&arr[i], &arr[j]);
         }
     }
-    Swap(&arr[i + 1], &arr[high]);
+    swap(&arr[i + 1], &arr[high]);
     return (i + 1);
 }
 
-void QuickSort(integer_t arr[], int low, int high)
+void quicksort(integer_t arr[], int low, int high)
 {
     if (low < high)
     {
       /* pi is partitioning index, arr[p] is now
       at right place */
-      int pi = Partition(arr, low, high);
+      int pi = partition(arr, low, high);
       // Separately sort elements before
       // partition and after partition
-      QuickSort(arr, low, pi - 1);
-      QuickSort(arr, pi + 1, high);
+      quicksort(arr, low, pi - 1);
+      quicksort(arr, pi + 1, high);
     }
 }
 
@@ -148,7 +148,7 @@ void QuickSort(integer_t arr[], int low, int high)
 int horowitz_sahni(int n,integer_t p[],integer_t desired_sum) {
   int nA = n / 2;
   int nB = n - nA;
-  int a[nA], b[nB];
+  integer_t a[nA], b[nB];
 
   for (int i = 0; i < nA; i++)
     a[i] = p[i];
@@ -156,32 +156,34 @@ int horowitz_sahni(int n,integer_t p[],integer_t desired_sum) {
   for (int i = 0; i < nB; i++)
     b[i] = p[nA+i];
 
-  integer_t sumsA[1<<nA], sumsB[1<<nB];
+  integer_t *sumsA = malloc((1<<nA)*sizeof(integer_t));
+  integer_t *sumsB = malloc((1<<nB)*sizeof(integer_t));
   
-  for (int mask = 0; mask < 1<<nA; mask++)
+  for (unsigned int mask = 0; mask < 1<<nA; mask++)
   {
       integer_t partial_sum = 0;
-      for (int bit = 0; bit < nA; bit++) {
+      for (unsigned int bit = 0; bit < nA; bit++) {
         if (mask & (1<<bit))
           partial_sum += a[bit];
       }
       sumsA[mask] = partial_sum; 
   }
 
-  QuickSort(sumsA,0, (1<<nA)-1);
-  for (int mask = 0; mask < 1<<nB; mask++)
+  quicksort(sumsA,0, (1<<nA)-1);
+  for (unsigned int mask = 0; mask < 1<<nB; mask++)
   {
     integer_t partial_sum = 0;
-    for (int bit = 0; bit < nB; bit++) {
+    for (unsigned int bit = 0; bit < nB; bit++) {
       if (mask & (1<<bit))
         partial_sum += b[bit];
     }
     sumsB[mask] = partial_sum;
   }
-  QuickSort(sumsB,0, (1<<nB)-1);
-  
+  quicksort(sumsB,0, (1<<nB)-1);
+    
   int i = 0, j = (1<<nB)-1;
 
+ 
   while (i<(1<<nA) && j >= 0)
   {
     if (sumsA[i] + sumsB[j] == desired_sum){
@@ -198,7 +200,6 @@ int horowitz_sahni(int n,integer_t p[],integer_t desired_sum) {
 //
 // main program
 //
-
 int main(void)
 {
   fprintf(stderr,"Program configuration:\n");
@@ -213,7 +214,7 @@ int main(void)
   for(int i = 0;i < n_problems;i++)
   {
     int n = all_subset_sum_problems[i].n; // the value of n
-    if(n > 46)
+    if(n > 47)
       continue; // skip large values of n
     integer_t *p = all_subset_sum_problems[i].p; // the weights
     //
