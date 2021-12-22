@@ -144,14 +144,9 @@ void quicksort(mask_data_t arr[], int low, int high) {
 int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
    int nA = n / 2;
    int nB = n - nA;
-   integer_t a[nA], b[nB];
-
-   for (int i = 0; i < nA; i++)
-      a[i] = p[i];
-
-   for (int i = 0; i < nB; i++)
-      b[i] = p[nA + i];
-
+   integer_t *a,*b;
+   a = p;
+   b = p + nA;
    mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
    mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
 
@@ -168,7 +163,6 @@ int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_re
          sumsA[mask] = partial_sum;
       }
    }
-
    quicksort(sumsA, 0, (1 << nA) - 1);
    for (int mask = 0; mask < 1 << nB; mask++) {
       mask_data_t partial_sum = {
@@ -215,9 +209,9 @@ int main(void) {
    //
    // for each n
    //
-   for (int i = 39; i < n_problems; i++) {
+   for (int i = 0; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 50)
+      if (n > 21)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
@@ -259,7 +253,7 @@ int main(void) {
             printf("%s", b & 1 ? "1" : "0");
             b = b >> 1;
          }
-         printf(" %lfs\n", end - start);
+         printf(" %lf\n", end - start);
       }
    }
    return 0;
