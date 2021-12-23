@@ -253,8 +253,9 @@ int main(void) {
             printf("%s", b & 1 ? "1" : "0");
             b = b >> 1;
          }
-         printf(" %lf\n", end - start);
+         printf(" %lf ", end - start);
       }
+      printf("\n");
    }
    return 0;
 }
