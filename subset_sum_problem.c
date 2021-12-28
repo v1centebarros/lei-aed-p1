@@ -469,6 +469,7 @@ int main(void) {
          // }
          // printf(" %lf\n", end - start);
       }
+      printf("\n");
    }
    return 0;
 }
