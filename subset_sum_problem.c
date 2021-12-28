@@ -216,74 +216,73 @@ void minheapInsert(heapData_t heap[], heapData_t element, int* heapSize)
 
 heapData_t deleteMin(heapData_t heap[], int* heapSize)
 {
-    int i, son;
-    heapData_t element = heap[0];
+   int i, son;
+   heapData_t element = heap[0];
 
-    (*heapSize)--;
-    for (i = 0; i * 2 + 1 <= *heapSize; i = son)
-    {
-        son = 2 * i + 1;
-        if (son < *heapSize && heap[son].sum > heap[son + 1].sum)
-            son++;
+   (*heapSize)--;
+   for (i = 0; i * 2 + 1 <= *heapSize; i = son) {
+      son = 2 * i + 1;
+      if (son < *heapSize && heap[son].sum > heap[son + 1].sum)
+         son++;
+      if (heap[son].sum < heap[*heapSize].sum)
+         heap[i] = heap[son];
+      else
+         break;
+   }
 
-        if (heap[son].sum < heap[*heapSize].sum)
-            heap[i] = heap[son];
-        else
-            break;
-    }
-
-    heap[i] = heap[*heapSize];
-    return element;
+   heap[i] = heap[*heapSize];
+   return element;
 }
 
 void maxheapInsert(heapData_t heap[], heapData_t element, int* heapSize)
 {
-    int i;
-    for (i = *heapSize; i > 0 && heap[(i - 1) / 2].sum < element.sum; i = (i - 1) / 2)
-    {
-        heap[i] = heap[(i - 1) / 2];
-    }
-    heap[i] = element;
-    (*heapSize)++;
+   int i;
+   for (i = *heapSize; i > 0 && heap[(i - 1) / 2].sum < element.sum; i = (i - 1) / 2) {
+      heap[i] = heap[(i - 1) / 2];
+   }
+   heap[i] = element;
+   (*heapSize)++;
 }
 
 heapData_t deletemax(heapData_t heap[], int* heapSize)
 {
-    int i, son;
-    heapData_t element = heap[0];
+   int i, son;
+   heapData_t element = heap[0];
 
-    (*heapSize)--;
-    for (i = 0; i * 2 + 1 <= *heapSize; i = son)
-    {
-        son = 2 * i + 1;
-        if (son < *heapSize && heap[son].sum < heap[son + 1].sum)
-            son++;
-
-        if (heap[son].sum > heap[*heapSize].sum)
-            heap[i] = heap[son];
-        else
-            break;
-    }
-
-    heap[i] = heap[*heapSize];
-    return element;
+   (*heapSize)--;
+   for (i = 0; i * 2 + 1 <= *heapSize; i = son) {
+      son = 2 * i + 1;
+      if (son < *heapSize && heap[son].sum < heap[son + 1].sum)
+         son++;
+      if (heap[son].sum > heap[*heapSize].sum)
+         heap[i] = heap[son];
+      else
+         break;
+   }
+   heap[i] = heap[*heapSize];
+   return element;
 }
 
-int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum) {
-   int nA = n / 4;
-   int nB = (n/2) - nA;
-   int nC = (3*n/4) - nB;
-   int nD = n - nC;
+int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
+   int nB = n / 2;
+   int nD = n - nB;
+
+   int nA = nB / 2;
+   nB -= nA;
+
+   int nC = nD / 2;
+   nD -= nC;
+
    integer_t * a = p;
    integer_t * b = p+nA;
-   integer_t * c = b+nB;
-   integer_t * d = c+nC;
+   integer_t * c = p+nA+nB;
+   integer_t * d = p+nA+nB+nC;
    mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
    mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
    mask_data_t * sumsC = malloc((1 << nC) * sizeof(mask_data_t));
    mask_data_t * sumsD = malloc((1 << nD) * sizeof(mask_data_t));
 
-   //Para o Array A 
+   //Para o Array A
    for (int mask = 0; mask < 1 << nA; mask++) {
       mask_data_t partial_sum = {
          .mask = 0,
@@ -298,7 +297,7 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum) {
       }
    }
    quicksort(sumsA, 0, (1 << nA) - 1);
-   
+
    //Para o Array B
    for (int mask = 0; mask < 1 << nB; mask++) {
       mask_data_t partial_sum = {
@@ -345,13 +344,12 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum) {
    }
    quicksort(sumsD, 0, (1 << nD) - 1);
 
-   heapData_t minHeap[nB];
-	heapData_t maxHeap[nC];
-	int nHMin = 0;
-	int nHMax = 0;
+   heapData_t minHeap[1 << nB];
+   heapData_t maxHeap[1 << nC];
+   int nHMin = 0;
+   int nHMax = 0;
 
-   for (int i = 0; i < nB; i++)
-   {
+   for (int i = 0; i < (1 << nB); i++) {
       heapData_t sum = {
          .mask = 0,
          .sum = sumsA[0].sum + sumsB[i].sum,
@@ -361,28 +359,29 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum) {
       minheapInsert(minHeap, sum, &nHMin);
    }
 
-   for (int i = 0; i < nC; i++)
-   {
+   for (int i = 0; i < (1 << nC); i++) {
       heapData_t sum = {
          .mask = 0,
-         .sum = sumsC[i].sum + sumsD[nD - 1].sum,
+         .sum = sumsC[i].sum + sumsD[(1 << nD) - 1].sum,
          .i0 = i,
-         .i1 = nD - 1
+         .i1 = (1 << nD) - 1
       };
-
       maxheapInsert(maxHeap,sum,&nHMax);
    }
-   
+
    while (nHMin > 0 && nHMax > 0){
       integer_t partial_sum = maxHeap[0].sum + minHeap[0].sum;
       if (partial_sum ==  desired_sum) {
+         free(sumsA);
+         free(sumsB);
+         free(sumsC);
+         free(sumsD);
          return 1;
       } else if (partial_sum > desired_sum){
-         printf("Maior");
          heapData_t old_max = deletemax(maxHeap,&nHMax);
-         
-         if (old_max.i0 > 0) {
-            old_max.i0--;
+         old_max.i1--;
+
+         if (old_max.i1 >= 0) {
             heapData_t new = {
                .sum = sumsC[old_max.i0].sum + sumsD[old_max.i1].sum,
                .i0 = old_max.i0,
@@ -391,22 +390,28 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum) {
             maxheapInsert(maxHeap,new,&nHMax);
          }
       } else {
-         printf("Menor");
          heapData_t old_min = deleteMin(minHeap, &nHMin);
          old_min.i0++;
-         if (old_min.i0 >= 0) {
+         if (old_min.i0 < (1 << nA)) {
             heapData_t new = {
-               .sum = sumsA[new.i0].sum + sumsB[new.i1].sum,
-               .i0 = new.i0,
-               .i1 = new.i1
+               .sum = sumsA[old_min.i0].sum + sumsB[old_min.i1].sum,
+               .i0 = old_min.i0,
+               .i1 = old_min.i1
             };
             minheapInsert(minHeap, new, &nHMin);
          }
       }
    }
-   
+
+   free(sumsA);
+   free(sumsB);
+   free(sumsC);
+   free(sumsD);
    return 0;
 }
+
+
+
 //
 // main program
 //
@@ -422,7 +427,7 @@ int main(void) {
    //
    for (int i = 0; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 21)
+      if (n > 49)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
@@ -458,7 +463,7 @@ int main(void) {
          #endif
 
          #ifdef MIM
-            printf("%d",meet_in_the_middle(n,p,desired_sum));
+            printf("%d \n",meet_in_the_middle(n,p,desired_sum, &b));
          #endif
 
          double end = cpu_time();
