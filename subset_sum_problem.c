@@ -263,7 +263,7 @@ heapData_t deletemax(heapData_t heap[], int* heapSize)
    return element;
 }
 
-int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
+int schroeppel_shamir (int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
    int nB = n / 2;
    int nD = n - nB;
 
@@ -351,7 +351,7 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t *
 
    for (int i = 0; i < (1 << nB); i++) {
       heapData_t sum = {
-         .mask = 0,
+         .mask = sumsA[0].mask | (sumsB[i].mask << nA),
          .sum = sumsA[0].sum + sumsB[i].sum,
          .i0 = 0,
          .i1 = i
@@ -361,7 +361,7 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t *
 
    for (int i = 0; i < (1 << nC); i++) {
       heapData_t sum = {
-         .mask = 0,
+         .mask = sumsC[i].mask | (sumsD[(1 << nD) - 1].mask << nC),
          .sum = sumsC[i].sum + sumsD[(1 << nD) - 1].sum,
          .i0 = i,
          .i1 = (1 << nD) - 1
@@ -372,6 +372,7 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t *
    while (nHMin > 0 && nHMax > 0){
       integer_t partial_sum = maxHeap[0].sum + minHeap[0].sum;
       if (partial_sum ==  desired_sum) {
+         *b_result = minHeap[0].mask | (maxHeap[0].mask << (nA+nB));
          free(sumsA);
          free(sumsB);
          free(sumsC);
@@ -383,6 +384,7 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t *
 
          if (old_max.i1 >= 0) {
             heapData_t new = {
+               .mask = sumsC[old_max.i0].mask | (sumsD[old_max.i1].mask << nC),
                .sum = sumsC[old_max.i0].sum + sumsD[old_max.i1].sum,
                .i0 = old_max.i0,
                .i1 = old_max.i1
@@ -394,6 +396,7 @@ int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum, integer_t *
          old_min.i0++;
          if (old_min.i0 < (1 << nA)) {
             heapData_t new = {
+               .mask = sumsA[old_min.i0].mask | (sumsB[old_min.i1].mask << nA),
                .sum = sumsA[old_min.i0].sum + sumsB[old_min.i1].sum,
                .i0 = old_min.i0,
                .i1 = old_min.i1
@@ -427,7 +430,7 @@ int main(void) {
    //
    for (int i = 0; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 49)
+      if (n > 21)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
@@ -463,16 +466,16 @@ int main(void) {
          #endif
 
          #ifdef MIM
-            printf("%d \n",meet_in_the_middle(n,p,desired_sum, &b));
+            schroeppel_shamir(n,p,desired_sum, &b);
          #endif
 
          double end = cpu_time();
 
-         // for (int i = 0; i < n; i++) {
-         //    printf("%s", b & 1 ? "1" : "0");
-         //    b = b >> 1;
-         // }
-         // printf(" %lf\n", end - start);
+         for (int i = 0; i < n; i++) {
+            printf("%s", b & 1 ? "1" : "0");
+            b = b >> 1;
+         }
+         printf(" %lf\n", end - start);
       }
       printf("\n");
    }
