@@ -16,8 +16,8 @@
 // #define BTF_ITR
 // #define BTF_RCR_NOTM
 // #define BTF_RCR_OTM
-#define HW_SN
-
+// #define HW_SN
+#define MIM
 //
 // include files
 //
@@ -196,6 +196,217 @@ int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_re
    return 0;
 }
 
+typedef struct {
+   integer_t mask;
+   integer_t sum;
+   int i0;
+   int i1;
+} heapData_t;
+
+void minheapInsert(heapData_t heap[], heapData_t element, int* heapSize)
+{
+    int i;
+    for (i = *heapSize; i > 0 && heap[(i - 1) / 2].sum > element.sum; i = (i - 1) / 2)
+    {
+        heap[i] = heap[(i - 1) / 2];
+    }
+    heap[i] = element;
+    (*heapSize)++;
+}
+
+heapData_t deleteMin(heapData_t heap[], int* heapSize)
+{
+    int i, son;
+    heapData_t element = heap[0];
+
+    (*heapSize)--;
+    for (i = 0; i * 2 + 1 <= *heapSize; i = son)
+    {
+        son = 2 * i + 1;
+        if (son < *heapSize && heap[son].sum > heap[son + 1].sum)
+            son++;
+
+        if (heap[son].sum < heap[*heapSize].sum)
+            heap[i] = heap[son];
+        else
+            break;
+    }
+
+    heap[i] = heap[*heapSize];
+    return element;
+}
+
+void maxheapInsert(heapData_t heap[], heapData_t element, int* heapSize)
+{
+    int i;
+    for (i = *heapSize; i > 0 && heap[(i - 1) / 2].sum < element.sum; i = (i - 1) / 2)
+    {
+        heap[i] = heap[(i - 1) / 2];
+    }
+    heap[i] = element;
+    (*heapSize)++;
+}
+
+heapData_t deletemax(heapData_t heap[], int* heapSize)
+{
+    int i, son;
+    heapData_t element = heap[0];
+
+    (*heapSize)--;
+    for (i = 0; i * 2 + 1 <= *heapSize; i = son)
+    {
+        son = 2 * i + 1;
+        if (son < *heapSize && heap[son].sum < heap[son + 1].sum)
+            son++;
+
+        if (heap[son].sum > heap[*heapSize].sum)
+            heap[i] = heap[son];
+        else
+            break;
+    }
+
+    heap[i] = heap[*heapSize];
+    return element;
+}
+
+int meet_in_the_middle (int n, integer_t p[], integer_t desired_sum) {
+   int nA = n / 4;
+   int nB = (n/2) - nA;
+   int nC = (3*n/4) - nB;
+   int nD = n - nC;
+   integer_t * a = p;
+   integer_t * b = p+nA;
+   integer_t * c = b+nB;
+   integer_t * d = c+nC;
+   mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
+   mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
+   mask_data_t * sumsC = malloc((1 << nC) * sizeof(mask_data_t));
+   mask_data_t * sumsD = malloc((1 << nD) * sizeof(mask_data_t));
+
+   //Para o Array A 
+   for (int mask = 0; mask < 1 << nA; mask++) {
+      mask_data_t partial_sum = {
+         .mask = 0,
+         .sum = 0
+      };
+      for (int bit = 0; bit < nA; bit++) {
+         if (mask & (1 << bit)) {
+            partial_sum.sum += a[bit];
+            partial_sum.mask = partial_sum.mask | (1 << bit);
+         }
+         sumsA[mask] = partial_sum;
+      }
+   }
+   quicksort(sumsA, 0, (1 << nA) - 1);
+   
+   //Para o Array B
+   for (int mask = 0; mask < 1 << nB; mask++) {
+      mask_data_t partial_sum = {
+         .mask = 0,
+         .sum = 0
+      };
+      for (int bit = 0; bit < nB; bit++) {
+         if (mask & (1 << bit)) {
+            partial_sum.sum += b[bit];
+            partial_sum.mask = partial_sum.mask | (1 << bit);
+         }
+         sumsB[mask] = partial_sum;
+      }
+   }
+   quicksort(sumsB, 0, (1 << nB) - 1);
+   //Para o Array C
+   for (int mask = 0; mask < 1 << nC; mask++) {
+      mask_data_t partial_sum = {
+         .mask = 0,
+         .sum = 0
+      };
+      for (int bit = 0; bit < nC; bit++) {
+         if (mask & (1 << bit)) {
+            partial_sum.sum += c[bit];
+            partial_sum.mask = partial_sum.mask | (1 << bit);
+         }
+         sumsC[mask] = partial_sum;
+      }
+   }
+   quicksort(sumsC, 0, (1 << nC) - 1);
+   //Para o Array D
+   for (int mask = 0; mask < 1 << nD; mask++) {
+      mask_data_t partial_sum = {
+         .mask = 0,
+         .sum = 0
+      };
+      for (int bit = 0; bit < nD; bit++) {
+         if (mask & (1 << bit)) {
+            partial_sum.sum += d[bit];
+            partial_sum.mask = partial_sum.mask | (1 << bit);
+         }
+         sumsD[mask] = partial_sum;
+      }
+   }
+   quicksort(sumsD, 0, (1 << nD) - 1);
+
+   heapData_t minHeap[nB];
+	heapData_t maxHeap[nC];
+	int nHMin = 0;
+	int nHMax = 0;
+
+   for (int i = 0; i < nB; i++)
+   {
+      heapData_t sum = {
+         .mask = 0,
+         .sum = sumsA[0].sum + sumsB[i].sum,
+         .i0 = 0,
+         .i1 = i
+      };
+      minheapInsert(minHeap, sum, &nHMin);
+   }
+
+   for (int i = 0; i < nC; i++)
+   {
+      heapData_t sum = {
+         .mask = 0,
+         .sum = sumsC[i].sum + sumsD[nD - 1].sum,
+         .i0 = i,
+         .i1 = nD - 1
+      };
+
+      maxheapInsert(maxHeap,sum,&nHMax);
+   }
+   
+   while (nHMin > 0 && nHMax > 0){
+      integer_t partial_sum = maxHeap[0].sum + minHeap[0].sum;
+      if (partial_sum ==  desired_sum) {
+         return 1;
+      } else if (partial_sum > desired_sum){
+         printf("Maior");
+         heapData_t old_max = deletemax(maxHeap,&nHMax);
+         
+         if (old_max.i0 > 0) {
+            old_max.i0--;
+            heapData_t new = {
+               .sum = sumsC[old_max.i0].sum + sumsD[old_max.i1].sum,
+               .i0 = old_max.i0,
+               .i1 = old_max.i1
+            };
+            maxheapInsert(maxHeap,new,&nHMax);
+         }
+      } else {
+         printf("Menor");
+         heapData_t old_min = deleteMin(minHeap, &nHMin);
+         old_min.i0++;
+         if (old_min.i0 >= 0) {
+            heapData_t new = {
+               .sum = sumsA[new.i0].sum + sumsB[new.i1].sum,
+               .i0 = new.i0,
+               .i1 = new.i1
+            };
+            minheapInsert(minHeap, new, &nHMin);
+         }
+      }
+   }
+   
+   return 0;
+}
 //
 // main program
 //
@@ -223,37 +434,40 @@ int main(void) {
 
          double start = cpu_time();
          #ifdef BTF_ITR
-         bruteforce_iterativo(n, p, desired_sum, & b);
+            bruteforce_iterativo(n, p, desired_sum, & b);
          #endif
 
          #ifdef BTF_RCR_NOTM
-         bruteforce_recursivo(n, p, 0, 0, desired_sum, 0, & b);
+            bruteforce_recursivo(n, p, 0, 0, desired_sum, 0, & b);
          #endif
 
          #ifdef BTF_RCR_OTM
-         integer_t * sums = (integer_t * ) malloc(n * sizeof(integer_t));
+            integer_t * sums = (integer_t * ) malloc(n * sizeof(integer_t));
 
-         for (int i = 0; i < n; i++) {
-            sums[i] = 0;
-            for (int j = 0; j <= i; j++) {
-               sums[i] += p[j];
+            for (int i = 0; i < n; i++) {
+               sums[i] = 0;
+               for (int j = 0; j <= i; j++) {
+                  sums[i] += p[j];
+               }
             }
-         }
-
-         bruteforce_recursivo_otimizado(n, p, n - 1, 0, desired_sum, 0, &b, sums);
+            bruteforce_recursivo_otimizado(n, p, n - 1, 0, desired_sum, 0, &b, sums);
          #endif
 
          #ifdef HW_SN
-         horowitz_sahni(n, p, desired_sum, &b);
+            horowitz_sahni(n, p, desired_sum, &b);
+         #endif
+
+         #ifdef MIM
+            printf("%d",meet_in_the_middle(n,p,desired_sum));
          #endif
 
          double end = cpu_time();
 
-         for (int i = 0; i < n; i++) {
-            printf("%s", b & 1 ? "1" : "0");
-            b = b >> 1;
-         }
-         printf(" %lf\n", end - start);
+         // for (int i = 0; i < n; i++) {
+         //    printf("%s", b & 1 ? "1" : "0");
+         //    b = b >> 1;
+         // }
+         // printf(" %lf\n", end - start);
       }
    }
    return 0;
