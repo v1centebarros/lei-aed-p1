@@ -14,10 +14,10 @@
 #endif
 
 // #define BTF_ITR
-// #define BTF_RCR_NOTM
+#define BTF_RCR_NOTM
 // #define BTF_RCR_OTM
 // #define HW_SN
-#define MIM
+// #define MIM
 //
 // include files
 //
@@ -143,15 +143,13 @@ void quicksort(mask_data_t arr[], int low, int high) {
 
 
 void sums_generator(int n, integer_t p[n], mask_data_t result[1 << n], int level, integer_t mask, integer_t subSum, int idx) {
-    if (level == n)
-    {
-        result[idx].sum = subSum;
-        result[idx].mask = mask;
-        return;
-    }
-
-    sums_generator(n, p, result, level + 1, mask | (1 << level), subSum + p[level], 2*idx);
-    sums_generator(n, p, result, level + 1, mask, subSum, 2*idx+1);
+   if (level == n) {
+      result[idx].sum = subSum;
+      result[idx].mask = mask;
+      return;
+   }
+   sums_generator(n, p, result, level + 1, mask | (1 << level), subSum + p[level], 2*idx);
+   sums_generator(n, p, result, level + 1, mask, subSum, 2*idx+1);
 }
 
 
@@ -373,9 +371,9 @@ int main(void) {
    //
    // for each n
    //
-   for (int i = 40; i < n_problems; i++) {
+   for (int i = 0; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 57)
+      if (n > 40)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
@@ -384,7 +382,6 @@ int main(void) {
       for (int j = 0; j < n_sums; j++) {
          integer_t desired_sum = all_subset_sum_problems[i].sums[j]; // the desired sum
          integer_t b = 0; // array to record the solution
-
          double start = cpu_time();
          #ifdef BTF_ITR
             bruteforce_iterativo(n, p, desired_sum, & b);
@@ -420,7 +417,7 @@ int main(void) {
             printf("%s", b & 1 ? "1" : "0");
             b = b >> 1;
          }
-         printf(" %lf\n", end - start);
+         printf(" %lf ", end - start);
       }
       printf("\n");
    }
