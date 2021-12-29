@@ -14,10 +14,10 @@
 #endif
 
 // #define BTF_ITR
-#define BTF_RCR_NOTM
+// #define BTF_RCR_NOTM
 // #define BTF_RCR_OTM
 // #define HW_SN
-// #define MIM
+#define MIM
 //
 // include files
 //
@@ -154,28 +154,11 @@ void sums_generator(int n, integer_t p[n], mask_data_t result[1 << n], int level
 
 
 
-int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
-   int nA = n / 2;
-   int nB = n - nA;
-   integer_t *a,*b;
-   a = p;
-   b = p + nA;
-   mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
-   mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
-
-   sums_generator(nA, a, sumsA, 0, 0, 0, 0);
-   quicksort(sumsA, 0, (1 << nA) - 1);
-   
-   sums_generator(nB, b, sumsB, 0, 0, 0, 0);
-   quicksort(sumsB, 0, (1 << nB) - 1);
-
+int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_result, mask_data_t *sumsA, mask_data_t *sumsB, int nA, int nB) {
    int i = 0, j = (1 << nB) - 1;
-
    while (i < (1 << nA) && j >= 0) {
       if (sumsA[i].sum + sumsB[j].sum == desired_sum) {
          *b_result = sumsA[i].mask | (sumsB[j].mask << nA);
-         free(sumsA);
-         free(sumsB);
          return 1;
       } else if (sumsA[i].sum + sumsB[j].sum < desired_sum) {
          i++;
@@ -253,40 +236,7 @@ heapData_t deletemax(heapData_t heap[], int* heapSize)
    return element;
 }
 
-int schroeppel_shamir (int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
-   int nB = n / 2;
-   int nD = n - nB;
-
-   int nA = nB / 2;
-   nB -= nA;
-
-   int nC = nD / 2;
-   nD -= nC;
-
-   integer_t * a = p;
-   integer_t * b = p+nA;
-   integer_t * c = p+nA+nB;
-   integer_t * d = p+nA+nB+nC;
-   mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
-   mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
-   mask_data_t * sumsC = malloc((1 << nC) * sizeof(mask_data_t));
-   mask_data_t * sumsD = malloc((1 << nD) * sizeof(mask_data_t));
-
-   //Para o Array A
-   sums_generator(nA, a, sumsA, 0, 0, 0, 0);
-   quicksort(sumsA, 0, (1 << nA) - 1);
-
-   //Para o Array B
-   sums_generator(nB, b, sumsB, 0, 0, 0, 0);
-   quicksort(sumsB, 0, (1 << nB) - 1);
-   
-   //Para o Array C
-   sums_generator(nC, c, sumsC, 0, 0, 0, 0);
-   quicksort(sumsC, 0, (1 << nC) - 1);
-   //Para o Array D
-   sums_generator(nD, d, sumsD, 0, 0, 0, 0);
-   quicksort(sumsD, 0, (1 << nD) - 1);
-
+int schroeppel_shamir (int n, integer_t p[], integer_t desired_sum, integer_t * b_result, mask_data_t *sumsA,mask_data_t *sumsB, mask_data_t *sumsC, mask_data_t *sumsD,int nA, int nB, int nC, int nD) {
    heapData_t minHeap[1 << nB];
    heapData_t maxHeap[1 << nC];
    int nHMin = 0;
@@ -316,10 +266,6 @@ int schroeppel_shamir (int n, integer_t p[], integer_t desired_sum, integer_t * 
       integer_t partial_sum = maxHeap[0].sum + minHeap[0].sum;
       if (partial_sum ==  desired_sum) {
          *b_result = minHeap[0].mask | (maxHeap[0].mask << (nA+nB));
-         free(sumsA);
-         free(sumsB);
-         free(sumsC);
-         free(sumsD);
          return 1;
       } else if (partial_sum > desired_sum){
          heapData_t old_max = deletemax(maxHeap,&nHMax);
@@ -348,11 +294,6 @@ int schroeppel_shamir (int n, integer_t p[], integer_t desired_sum, integer_t * 
          }
       }
    }
-
-   free(sumsA);
-   free(sumsB);
-   free(sumsC);
-   free(sumsD);
    return 0;
 }
 
@@ -373,12 +314,74 @@ int main(void) {
    //
    for (int i = 0; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 40)
+      if (n > 57)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
       // for each sum
       //
+      #ifdef BTF_RCR_OTM
+         integer_t * sums = (integer_t * ) malloc(n * sizeof(integer_t));
+
+         for (int i = 0; i < n; i++) {
+            sums[i] = 0;
+            for (int j = 0; j <= i; j++) {
+               sums[i] += p[j];
+            }
+         }
+      #endif
+
+      #ifdef HW_SN
+         int nA = n / 2;
+         int nB = n - nA;
+         integer_t *a,*b;
+         a = p;
+         b = p + nA;
+         mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
+         mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
+
+         sums_generator(nA, a, sumsA, 0, 0, 0, 0);
+         quicksort(sumsA, 0, (1 << nA) - 1);
+         
+         sums_generator(nB, b, sumsB, 0, 0, 0, 0);
+         quicksort(sumsB, 0, (1 << nB) - 1);
+      #endif
+
+      #ifdef MIM
+         int nB = n / 2;
+         int nD = n - nB;
+
+         int nA = nB / 2;
+         nB -= nA;
+
+         int nC = nD / 2;
+         nD -= nC;
+
+         integer_t * a = p;
+         integer_t * b = p+nA;
+         integer_t * c = p+nA+nB;
+         integer_t * d = p+nA+nB+nC;
+         mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
+         mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
+         mask_data_t * sumsC = malloc((1 << nC) * sizeof(mask_data_t));
+         mask_data_t * sumsD = malloc((1 << nD) * sizeof(mask_data_t));
+
+         //Para o Array A
+         sums_generator(nA, a, sumsA, 0, 0, 0, 0);
+         quicksort(sumsA, 0, (1 << nA) - 1);
+
+         //Para o Array B
+         sums_generator(nB, b, sumsB, 0, 0, 0, 0);
+         quicksort(sumsB, 0, (1 << nB) - 1);
+         
+         //Para o Array C
+         sums_generator(nC, c, sumsC, 0, 0, 0, 0);
+         quicksort(sumsC, 0, (1 << nC) - 1);
+         //Para o Array D
+         sums_generator(nD, d, sumsD, 0, 0, 0, 0);
+         quicksort(sumsD, 0, (1 << nD) - 1);
+      #endif
+
       for (int j = 0; j < n_sums; j++) {
          integer_t desired_sum = all_subset_sum_problems[i].sums[j]; // the desired sum
          integer_t b = 0; // array to record the solution
@@ -392,23 +395,15 @@ int main(void) {
          #endif
 
          #ifdef BTF_RCR_OTM
-            integer_t * sums = (integer_t * ) malloc(n * sizeof(integer_t));
-
-            for (int i = 0; i < n; i++) {
-               sums[i] = 0;
-               for (int j = 0; j <= i; j++) {
-                  sums[i] += p[j];
-               }
-            }
             bruteforce_recursivo_otimizado(n, p, n - 1, 0, desired_sum, 0, &b, sums);
          #endif
 
          #ifdef HW_SN
-            horowitz_sahni(n, p, desired_sum, &b);
+            horowitz_sahni(n, p, desired_sum, &b, sumsA,sumsB,nA,nB);
          #endif
 
          #ifdef MIM
-            schroeppel_shamir(n,p,desired_sum, &b);
+            schroeppel_shamir(n,p,desired_sum, &b,sumsA,sumsB,sumsC,sumsD,nA,nB,nC,nD);
          #endif
 
          double end = cpu_time();
@@ -417,9 +412,21 @@ int main(void) {
             printf("%s", b & 1 ? "1" : "0");
             b = b >> 1;
          }
-         printf(" %lf ", end - start);
+         printf(" %lf\n", end - start);
       }
-      printf("\n");
+      #ifdef BTF_RCR_OTM
+         free(sums);
+      #endif
+      #ifdef HW_SN
+         free(sumsA);
+         free(sumsB);
+      #endif
+      #ifdef MIM
+         free(sumsA);
+         free(sumsB);
+         free(sumsC);
+         free(sumsD);
+      #endif
    }
    return 0;
 }
