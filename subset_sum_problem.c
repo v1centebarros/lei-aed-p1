@@ -141,6 +141,21 @@ void quicksort(mask_data_t arr[], int low, int high) {
    }
 }
 
+
+void sums_generator(int n, integer_t p[n], mask_data_t result[1 << n], int level, integer_t mask, integer_t subSum, int idx) {
+    if (level == n)
+    {
+        result[idx].sum = subSum;
+        result[idx].mask = mask;
+        return;
+    }
+
+    sums_generator(n, p, result, level + 1, mask | (1 << level), subSum + p[level], 2*idx);
+    sums_generator(n, p, result, level + 1, mask, subSum, 2*idx+1);
+}
+
+
+
 int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_result) {
    int nA = n / 2;
    int nB = n - nA;
@@ -150,33 +165,10 @@ int horowitz_sahni(int n, integer_t p[], integer_t desired_sum, integer_t * b_re
    mask_data_t * sumsA = malloc((1 << nA) * sizeof(mask_data_t));
    mask_data_t * sumsB = malloc((1 << nB) * sizeof(mask_data_t));
 
-   for (int mask = 0; mask < 1 << nA; mask++) {
-      mask_data_t partial_sum = {
-         .mask = 0,
-         .sum = 0
-      };
-      for (int bit = 0; bit < nA; bit++) {
-         if (mask & (1 << bit)) {
-            partial_sum.sum += a[bit];
-            partial_sum.mask = partial_sum.mask | (1 << bit);
-         }
-         sumsA[mask] = partial_sum;
-      }
-   }
+   sums_generator(nA, a, sumsA, 0, 0, 0, 0);
    quicksort(sumsA, 0, (1 << nA) - 1);
-   for (int mask = 0; mask < 1 << nB; mask++) {
-      mask_data_t partial_sum = {
-         .mask = 0,
-         .sum = 0
-      };
-      for (int bit = 0; bit < nB; bit++) {
-         if (mask & (1 << bit)) {
-            partial_sum.sum += b[bit];
-            partial_sum.mask = partial_sum.mask | (1 << bit);
-         }
-         sumsB[mask] = partial_sum;
-      }
-   }
+   
+   sums_generator(nB, b, sumsB, 0, 0, 0, 0);
    quicksort(sumsB, 0, (1 << nB) - 1);
 
    int i = 0, j = (1 << nB) - 1;
@@ -283,65 +275,18 @@ int schroeppel_shamir (int n, integer_t p[], integer_t desired_sum, integer_t * 
    mask_data_t * sumsD = malloc((1 << nD) * sizeof(mask_data_t));
 
    //Para o Array A
-   for (int mask = 0; mask < 1 << nA; mask++) {
-      mask_data_t partial_sum = {
-         .mask = 0,
-         .sum = 0
-      };
-      for (int bit = 0; bit < nA; bit++) {
-         if (mask & (1 << bit)) {
-            partial_sum.sum += a[bit];
-            partial_sum.mask = partial_sum.mask | (1 << bit);
-         }
-         sumsA[mask] = partial_sum;
-      }
-   }
+   sums_generator(nA, a, sumsA, 0, 0, 0, 0);
    quicksort(sumsA, 0, (1 << nA) - 1);
 
    //Para o Array B
-   for (int mask = 0; mask < 1 << nB; mask++) {
-      mask_data_t partial_sum = {
-         .mask = 0,
-         .sum = 0
-      };
-      for (int bit = 0; bit < nB; bit++) {
-         if (mask & (1 << bit)) {
-            partial_sum.sum += b[bit];
-            partial_sum.mask = partial_sum.mask | (1 << bit);
-         }
-         sumsB[mask] = partial_sum;
-      }
-   }
+   sums_generator(nB, b, sumsB, 0, 0, 0, 0);
    quicksort(sumsB, 0, (1 << nB) - 1);
+   
    //Para o Array C
-   for (int mask = 0; mask < 1 << nC; mask++) {
-      mask_data_t partial_sum = {
-         .mask = 0,
-         .sum = 0
-      };
-      for (int bit = 0; bit < nC; bit++) {
-         if (mask & (1 << bit)) {
-            partial_sum.sum += c[bit];
-            partial_sum.mask = partial_sum.mask | (1 << bit);
-         }
-         sumsC[mask] = partial_sum;
-      }
-   }
+   sums_generator(nC, c, sumsC, 0, 0, 0, 0);
    quicksort(sumsC, 0, (1 << nC) - 1);
    //Para o Array D
-   for (int mask = 0; mask < 1 << nD; mask++) {
-      mask_data_t partial_sum = {
-         .mask = 0,
-         .sum = 0
-      };
-      for (int bit = 0; bit < nD; bit++) {
-         if (mask & (1 << bit)) {
-            partial_sum.sum += d[bit];
-            partial_sum.mask = partial_sum.mask | (1 << bit);
-         }
-         sumsD[mask] = partial_sum;
-      }
-   }
+   sums_generator(nD, d, sumsD, 0, 0, 0, 0);
    quicksort(sumsD, 0, (1 << nD) - 1);
 
    heapData_t minHeap[1 << nB];
@@ -428,9 +373,9 @@ int main(void) {
    //
    // for each n
    //
-   for (int i = 0; i < n_problems; i++) {
+   for (int i = 40; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 21)
+      if (n > 57)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
