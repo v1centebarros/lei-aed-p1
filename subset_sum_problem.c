@@ -14,10 +14,10 @@
 #endif
 
 // #define BTF_ITR
-// #define BTF_RCR_NOTM
+#define BTF_RCR_NOTM
 // #define BTF_RCR_OTM
 // #define HW_SN
-#define MIM
+// #define MIM
 //
 // include files
 //
@@ -320,6 +320,7 @@ int main(void) {
       //
       // for each sum
       //
+      double start = cpu_time();
       #ifdef BTF_RCR_OTM
          integer_t * sums = (integer_t * ) malloc(n * sizeof(integer_t));
 
@@ -348,14 +349,11 @@ int main(void) {
       #endif
 
       #ifdef MIM
-         int nB = n / 2;
-         int nD = n - nB;
 
-         int nA = nB / 2;
-         nB -= nA;
-
-         int nC = nD / 2;
-         nD -= nC;
+         int nA = n / 4;
+         int nB = n/2 - nA;
+         int nC = nB;
+         int nD = n - nA-nB-nC;
 
          integer_t * a = p;
          integer_t * b = p+nA;
@@ -381,6 +379,9 @@ int main(void) {
          sums_generator(nD, d, sumsD, 0, 0, 0, 0);
          quicksort(sumsD, 0, (1 << nD) - 1);
       #endif
+      double end = cpu_time();
+
+      printf("%lf\n", end - start);
 
       for (int j = 0; j < n_sums; j++) {
          integer_t desired_sum = all_subset_sum_problems[i].sums[j]; // the desired sum

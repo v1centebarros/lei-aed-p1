@@ -4,11 +4,11 @@
 # makefile to compile the A.01 assignment
 #
 
-STUDENT_H_FILE=000000.h
+STUDENT_H_FILE=103823.h
 
 clean:
 	rm -fv a.out
-	rm -fv subset_sum_problem solution_subset_sum_problem *.pdf
+	rm -fv subset_sum_problem solution_smashsubset_sum_problem *.pdf
 
 
 subset_sum_problem:	subset_sum_problem.c $(STUDENT_H_FILE)
