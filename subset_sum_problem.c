@@ -14,8 +14,8 @@
 #endif
 
 // #define BTF_ITR
-#define BTF_RCR_NOTM
-// #define BTF_RCR_OTM
+// #define BTF_RCR_NOTM
+#define BTF_RCR_OTM
 // #define HW_SN
 // #define MIM
 //
@@ -314,7 +314,7 @@ int main(void) {
    //
    for (int i = 0; i < n_problems; i++) {
       int n = all_subset_sum_problems[i].n; // the value of n
-      if (n > 57)
+      if (n > 42)
          continue; // skip large values of n
       integer_t * p = all_subset_sum_problems[i].p; // the weights
       //
@@ -324,11 +324,17 @@ int main(void) {
       #ifdef BTF_RCR_OTM
          integer_t * sums = (integer_t * ) malloc(n * sizeof(integer_t));
 
-         for (int i = 0; i < n; i++) {
-            sums[i] = 0;
-            for (int j = 0; j <= i; j++) {
-               sums[i] += p[j];
-            }
+
+         // for (int i = 0; i < n; i++) {
+         //    sums[i] = 0;
+         //    for (int j = 0; j <= i; j++) {
+         //       sums[i] += p[j];
+         //    }
+         // }
+
+         sums[0] = p[0];
+         for(int i=1; i<n; i++) {
+            sums[i] = sums[i-1]+p[i];
          }
       #endif
 

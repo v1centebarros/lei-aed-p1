@@ -4,7 +4,7 @@
 # makefile to compile the A.01 assignment
 #
 
-STUDENT_H_FILE=103823.h
+STUDENT_H_FILE=000000.h
 
 clean:
 	rm -fv a.out
